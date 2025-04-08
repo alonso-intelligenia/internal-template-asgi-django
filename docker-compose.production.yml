@@ -1,0 +1,55 @@
+volumes:
+  backend_production_postgres_data: {}
+  backend_production_postgres_data_backups: {}
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: ./compose/production/django/Dockerfile
+    container_name: {{project_name}}_backend_production_django
+    environment:
+      # DJANGO SETTINGS
+      - DJANGO_DEBUG=False
+      - USE_DOCKER=yes
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_ALLOWED_HOSTS=localhost
+      - DJANGO_SECRET_KEY=J9klVZqk5Q2Z4qpetJC4scLQSihpnRwXjyoSqgfJJhscLSjnZq9VKsPecFPNoUjT
+      - DJANGO_ADMIN_URL=rmZI5UUSkFeIhM0w08EA2cXCCaiMGwVv/
+      - DJANGO_SECURE_SSL_REDIRECT=False  # Uncomment to test this compose locally
+      - IPYTHONDIR=/app/.ipython
+      - WEB_CONCURRENCY=4  # https://docs.gunicorn.org/en/stable/settings.html#workers
+      # DB SETTINGS
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - {{project_name}}_db={{project_name}}_backend
+      - POSTGRES_USER=debug
+      - POSTGRES_PASSWORD=debug
+      # Note: Set the following environment variables to run the project properly
+      - FIREBASE_PRIVATE_KEY_ID=valor_secreto
+      - FIREBASE_PRIVATE_KEY="valor_secreto"
+      - FIREBASE_CLIENT_EMAIL=mail_secreto
+      - FIREBASE_CLIENT_ID=valor_secreto
+      - FIREBASE_CLIENT_X509_CERT_URL=valor_secreto
+
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    command: prod-asgi-webserver # Command located on entry production/django/entrypoint
+
+  postgres:
+    image: postgres:16
+    container_name: {{project_name}}_backend_production_postgres
+    restart: on-failure
+    volumes:
+      - backend_production_postgres_data:/var/lib/postgresql/data
+      - backend_production_postgres_data_backups:/backups
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - {{project_name}}_db={{project_name}}_backend
+      - POSTGRES_USER=debug
+      - POSTGRES_PASSWORD=debug
+    ports:
+      - "5432:5432"

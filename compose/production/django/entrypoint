@@ -1,0 +1,112 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ -z "${POSTGRES_USER}" ]; then
+    base_postgres_image_default_user='postgres'
+    export POSTGRES_USER="${base_postgres_image_default_user}"
+fi
+export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+
+
+postgresql_ready() {
+python << END
+import sys
+import time
+
+import psycopg
+
+suggest_unrecoverable_after = 30
+start = time.time()
+
+while True:
+    try:
+        psycopg.connect(
+            dbname="${POSTGRES_DB}",
+            user="${POSTGRES_USER}",
+            password="${POSTGRES_PASSWORD}",
+            host="${POSTGRES_HOST}",
+            port="${POSTGRES_PORT}",
+        )
+        break
+    except psycopg.OperationalError as error:
+        sys.stderr.write("Waiting for PostgreSQL to become available...\n")
+
+        if time.time() - start > suggest_unrecoverable_after:
+            sys.stderr.write("  This is taking longer than expected. The following exception may be indicative of an unrecoverable error: '{}'\n".format(error))
+
+    time.sleep(1)
+END
+
+>&2 echo 'PostgreSQL is available'
+}
+
+# Run django migrate script and set dummy table
+django_migrate() {
+  echo "*** Running migrate (and answer 'yes' to all questions)"
+  (yes yes || true) | python ./manage.py migrate || exit 1
+}
+
+django_makemessages() {
+  python manage.py makemessages -l es | tail -1
+}
+
+django_compilemessages() {
+  python manage.py compilemessages -f | tail -1
+}
+
+django_collectstatic(){
+  python manage.py collectstatic --link --no-input | tail -1
+}
+
+django_reset_db() {
+  echo "*** Resetting database data"
+  python manage.py reset_db --noinput
+}
+
+django_load_fixtures() {
+  echo "*** Loading fixtures data on DB"
+#  python manage.py loaddata
+}
+
+
+case "$1" in
+local-webserver)
+  postgresql_ready
+  django_migrate
+  django_load_fixtures
+  echo "*** Run development webserver"
+  exec uvicorn config.asgi:application --host 0.0.0.0 --reload --reload-include '*.html'
+  ;;
+
+django-migrate)
+  postgresql_ready
+  django_migrate
+  ;;
+
+prod-asgi-webserver)
+  postgresql_ready
+  django_migrate
+  django_load_fixtures
+#  django_makemessages
+  django_compilemessages
+  django_collectstatic
+  echo "*** Launching Gunicorn application server"
+  # https://www.uvicorn.org/deployment/#gunicorn
+  exec /usr/local/bin/gunicorn config.asgi -c compose/production/django/gunicorn_config.py --chdir=/app --bind 0.0.0.0:8000 -k uvicorn_worker.UvicornWorker
+#  exec uwsgi --ini /etc/uwsgi/uwsgi.ini
+  ;;
+
+run-cron)
+  declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' >/container.env
+  echo "*** Launching cron daemon"
+  exec cron -f -L 3
+  ;;
+
+*)
+  exec "$@"
+  ;;
+
+esac
