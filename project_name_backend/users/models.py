@@ -8,7 +8,6 @@ from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from .managers import UserManager
-from ..utils.abstract_classes import {{project_name}}TokenModel
 
 
 class User(AbstractUser):
