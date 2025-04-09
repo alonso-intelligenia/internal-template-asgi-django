@@ -73,8 +73,6 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
-    "firebase_admin",
-    "import_export",
     "adrf",
 ]
 
@@ -310,16 +308,3 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
-
-# FIREBASE SETTINGS
-FIREBASE_TYPE = env.str("FIREBASE_TYPE", default="service_account")
-FIREBASE_PROJECT_ID =  env.str("FIREBASE_PROJECT_ID", default="{{project_name}}")
-FIREBASE_PRIVATE_KEY_ID =  env.str("FIREBASE_PRIVATE_KEY_ID", default="")
-FIREBASE_PRIVATE_KEY =  env.str("FIREBASE_PRIVATE_KEY", default="")
-FIREBASE_CLIENT_EMAIL =  env.str("FIREBASE_CLIENT_EMAIL", default="")
-FIREBASE_CLIENT_ID =  env.str("FIREBASE_CLIENT_ID", default="")
-FIREBASE_AUTH_URI =  env.str("FIREBASE_AUTH_URI", default="https://accounts.google.com/o/oauth2/auth")
-FIREBASE_TOKEN_URI =  env.str("FIREBASE_TOKEN_URI", default="https://oauth2.googleapis.com/token")
-FIREBASE_AUTH_PROVIDER_X509_CERT_URL =  env.str("FIREBASE_AUTH_PROVIDER_X509_CERT_URL", default="https://www.googleapis.com/oauth2/v1/certs")
-FIREBASE_CLIENT_X509_CERT_URL =  env.str("FIREBASE_CLIENT_X509_CERT_URL", default="")
-FIREBASE_UNIVERSE_DOMAIN =  env.str("FIREBASE_UNIVERSE_DOMAIN", default="googleapis.com")

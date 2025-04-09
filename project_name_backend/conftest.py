@@ -2,7 +2,6 @@ import datetime
 from unittest import mock
 
 import pytest
-from firebase_admin.messaging import UnregisteredError
 from model_bakery import baker
 from rest_framework.test import APITestCase
 

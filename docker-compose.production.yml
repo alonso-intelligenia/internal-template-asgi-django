@@ -25,13 +25,6 @@ services:
       - {{project_name}}_db={{project_name}}_backend
       - POSTGRES_USER=debug
       - POSTGRES_PASSWORD=debug
-      # Note: Set the following environment variables to run the project properly
-      - FIREBASE_PRIVATE_KEY_ID=valor_secreto
-      - FIREBASE_PRIVATE_KEY="valor_secreto"
-      - FIREBASE_CLIENT_EMAIL=mail_secreto
-      - FIREBASE_CLIENT_ID=valor_secreto
-      - FIREBASE_CLIENT_X509_CERT_URL=valor_secreto
-
     ports:
       - "8000:8000"
     depends_on:
